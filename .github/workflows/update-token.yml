@@ -28,11 +28,11 @@ jobs:
         run: python GenerateToken.py
 
       - name: Commit and push changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add index.html
           git commit -m "Update token in index.html"
           git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/mrmapllc/3D-Map-Sausalito.git
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
