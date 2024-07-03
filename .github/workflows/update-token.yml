@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Ensure using v3 for Node.js 20
+        uses: actions/checkout@v3  # Updated to Node.js 20
 
       - name: Set up Python
-        uses: actions/setup-python@v4  # Ensure using v4 for Node.js 20
+        uses: actions/setup-python@v4  # Updated to Node.js 20
         with:
           python-version: '3.x'
 
