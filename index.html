@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Map of Sausalito, CA</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+  <style>
+    html, body, #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #header {
+      background-color: #66bb6a;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    #header .title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #header .developed-by {
+      font-size: 12px;
+    }
+
+    #viewDiv {
+      flex: 1;
+      position: relative;
+    }
+
+    .esri-attribution.esri-widget {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 5px;
+      max-height: 30px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .esri-attribution__sources {
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .esri-attribution__logo {
+      display: inline-block;
+      vertical-align: middle.
+    }
+  </style>
+  <script src="https://js.arcgis.com/4.29/"></script>
+</head>
+<body>
+  <div id="header">
+    <div class="title">Sausalito Visibility Verifier</div>
+    <div class="developed-by">Developed by: Mr. Map, LLC</div>
+  </div>
+  <div id="viewDiv"></div>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/layers/SceneLayer",
+      "esri/layers/FeatureLayer",
+      "esri/layers/GraphicsLayer",
+      "esri/rest/support/Query",
+      "esri/config",
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Expand",
+      "esri/core/reactiveUtils",
+      "esri/widgets/LayerList",
+      "esri/Graphic"
+    ], function(Map, SceneView, SceneLayer, FeatureLayer, GraphicsLayer, Query, esriConfig, BasemapGallery, Expand, reactiveUtils, LayerList, Graphic) {
+
+      // Token
+      var token = "mzFcMRqhxzPAoRJavp2MJngNzOXMGXKTE25GDqcLccy1J9Tug2tlhMAuP5DjVA6SxMtaua7pdPlDWlTVrJBj7CgwsZ56wrxdT4IhVjHPfIkGBn6uF40bpvMYLRiFtcZmBEuCEt-3DpvveQZAk_OkfaQQkUGeMr-GwveJo4HsLIaJ3Ros2rzIEf_LWHsV9HZn";
+
+      // Set default token
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/e78obyrOLbvYxKAG/arcgis/rest/services/Sample_Sight_Lines/FeatureServer",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        }
+      });
+
+      // Create a map with the specified basemap and ground elevation
+      var map = new Map({
+        basemap: {
+          portalItem: {
+            id: "0560e29930dc4d5ebeb58c635c0909c9" // References the specific 3D Topographic Basemap
+          }
+        },
+        ground: "world-elevation"
+      });
+
+      // Create a SceneView to display the 3D map
+      var view = new SceneView({
+        container: "viewDiv",
+        map: map,
+        camera: {
+          position: {
+            // Position the camera to face the sample building in Sausalito, CA
+            latitude: 37.8602092,
+            longitude: -122.4551843,
+            z: 500 // Altitude in meters
+          },
+          heading: 262, // Adjust heading to face the building
+          tilt: 80
+        }
+      });
+
+      // Add the SceneLayer for the 3D buildings
+      var sceneLayer = new SceneLayer({
+        url: "https://tiles.arcgis.com/tiles/e78obyrOLbvYxKAG/arcgis/rest/services/SampleBuilding_Layer/SceneServer"
+      });
+      map.add(sceneLayer);
+
+      // Add the FeatureLayer for the sight lines
+      var featureLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/e78obyrOLbvYxKAG/arcgis/rest/services/Sample_Sight_Lines/FeatureServer",
+        outFields: ["*"],
+        token: token
+      });
+
+      // Add error handling for the feature layer
+      featureLayer.load().then(() => {
+        map.add(featureLayer);
+      }).catch((error) => {
+        console.error("Failed to load FeatureLayer:", error);
+      });
+
+      // Create a graphics layer to hold the intersecting lines
+      var graphicsLayer = new GraphicsLayer({
+        title: "Intersecting Sight Lines" // Give a title for easy identification in the LayerList
+      });
+      map.add(graphicsLayer);
+
+      // Create the BasemapGallery widget
+      var basemapGallery = new BasemapGallery({
+        view: view,
+        container: document.createElement("div")
+      });
+
+      // Create the Expand widget for BasemapGallery
+      var bgExpand = new Expand({
+        view: view,
+        content: basemapGallery,
+        expandIconClass: "esri-icon-basemap"
+      });
+
+      // Add the Expand widget to the top-right corner
+      view.ui.add(bgExpand, {
+        position: "top-right"
+      });
+
+      // Create the LayerList widget
+      var layerList = new LayerList({
+        view: view
+      });
+
+      // Create the Expand widget for LayerList
+      var llExpand = new Expand({
+        view: view,
+        content: layerList,
+        expandIconClass: "esri-icon-layers"
+      });
+
+      // Add the Expand widget for LayerList to the top-right corner
+      view.ui.add(llExpand, {
+        position: "top-right"
+      });
+
+      // Close the Expand widget on mobile devices when a basemap is selected
+      reactiveUtils.watch(
+        () => basemapGallery.activeBasemap,
+        () => {
+          const mobileSize = view.heightBreakpoint === "xsmall" || view.widthBreakpoint === "xsmall";
+          if (mobileSize) {
+            bgExpand.collapse();
+          }
+        }
+      );
+
+      // Wait for the view to load before performing the query
+      view.when(function() {
+        // Create a query to find sight lines intersecting buildings
+        var query = new Query();
+        query.geometry = sceneLayer.fullExtent; // Use the full extent of the buildings layer for the query
+        query.spatialRelationship = "intersects"; // Set the spatial relationship to intersects
+        query.returnGeometry = true;
+        query.outFields = ["*"]; // Return all fields
+
+        // Execute the query
+        featureLayer.queryFeatures(query).then(function(result) {
+          console.log("Sight lines intersecting buildings: ", result.features);
+
+          // Highlight the intersecting features on the map
+          var intersectingGraphics = result.features.map(function(feature) {
+            return new Graphic({
+              geometry: feature.geometry,
+              symbol: {
+                type: "simple-line", // autocasts as new SimpleLineSymbol()
+                color: [255, 0, 0],
+                width: 2
+              }
+            });
+          });
+          graphicsLayer.addMany(intersectingGraphics);
+        }).catch(function(error) {
+          console.error("Error querying sight lines:", error);
+        });
+      }).catch(function(error) {
+        console.error("Error initializing view:", error);
+      });
+
+    });
+  </script>
+</body>
+</html>
