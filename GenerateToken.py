@@ -10,7 +10,9 @@ def generate_token():
         'expiration': 60  # Token expiration in minutes
     }
     response = requests.post(url, data=params)
-    token = response.json().get('token')
+    response_json = response.json()
+    print("Response JSON:", response_json)
+    token = response_json.get('token')
     return token
 
 def update_index_html(token):
@@ -25,4 +27,8 @@ def update_index_html(token):
 
 if __name__ == "__main__":
     new_token = generate_token()
-    update_index_html(new_token)
+    print("New token:", new_token)
+    if new_token:
+        update_index_html(new_token)
+    else:
+        print("Failed to generate a new token.")
