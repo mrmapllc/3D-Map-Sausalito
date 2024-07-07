@@ -2,7 +2,7 @@ name: Update ArcGIS Token
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Runs the script every hour
+    - cron: '*/30 * * * *' # Runs the script every 30 minutes
   push:
     paths:
       - 'GenerateToken.py'
@@ -19,7 +19,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.x  # Specify the Python version you want to use
+        python-version: '3.x'  # Specify the Python version you want to use
 
     - name: Install requests library
       run: pip install requests
@@ -27,12 +27,16 @@ jobs:
     - name: Run GenerateToken script
       run: python GenerateToken.py
 
-    - name: Commit and push changes
+    - name: Configure Git
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+    - name: Commit and push changes
+      run: |
+        git status
         git add index.html
-        git commit -m 'Update ArcGIS token'
+        git commit -m 'Update ArcGIS token' || echo "No changes to commit"
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
