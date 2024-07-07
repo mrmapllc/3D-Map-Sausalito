@@ -2,7 +2,7 @@ name: Update ArcGIS Token
 
 on:
   schedule:
-    - cron: '0 * * * *' # Runs the script every hour
+    - cron: '*/30 * * * *' # Runs the script every hour
   push:
     paths:
       - 'GenerateToken.py'
